@@ -116,6 +116,7 @@
             display: flex;
             gap: 12px;
             align-items: center;
+            flex-wrap: wrap;
         }
         
         .radio-option {
@@ -137,12 +138,12 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 13px;
-            width: 200px;
+            width: 100%;
+            margin-top: 4px;
         }
         
-        .other-note:disabled {
-            background-color: #f5f5f5;
-            cursor: not-allowed;
+        .other-note.hidden {
+            display: none;
         }
         
         .other-note.error {
@@ -313,7 +314,7 @@
         </div>
         
         <div class="footer">
-            Version v0.1.2
+            Version v0.2.0
         </div>
     </div>
     
@@ -577,6 +578,12 @@
                 const radioGroup = document.createElement('div');
                 radioGroup.className = 'radio-group';
                 
+                const radioContainer = document.createElement('div');
+                radioContainer.style.display = 'flex';
+                radioContainer.style.gap = '12px';
+                
+                let otherNote = null;
+                
                 PARENTS.forEach(parent => {
                     const radioOption = document.createElement('div');
                     radioOption.className = 'radio-option';
@@ -594,33 +601,38 @@
                     
                     radioOption.appendChild(radio);
                     radioOption.appendChild(label);
-                    radioGroup.appendChild(radioOption);
+                    radioContainer.appendChild(radioOption);
                     
                     if (parent === 'Other') {
-                        const noteInput = document.createElement('input');
-                        noteInput.type = 'text';
-                        noteInput.className = 'other-note';
-                        noteInput.value = cellData[child].note;
-                        noteInput.disabled = !radio.checked;
-                        noteInput.dataset.cellId = cellId;
-                        noteInput.dataset.child = child;
+                        otherNote = document.createElement('input');
+                        otherNote.type = 'text';
+                        otherNote.className = 'other-note';
+                        otherNote.value = cellData[child].note;
+                        otherNote.dataset.cellId = cellId;
+                        otherNote.dataset.child = child;
+                        
+                        if (!radio.checked) {
+                            otherNote.classList.add('hidden');
+                        }
                         
                         radio.addEventListener('change', () => {
-                            noteInput.disabled = false;
-                            noteInput.focus();
+                            otherNote.classList.remove('hidden');
+                            otherNote.focus();
                         });
-                        
-                        radioGroup.appendChild(noteInput);
                     } else {
                         radio.addEventListener('change', () => {
-                            const otherNote = radioGroup.querySelector('.other-note');
                             if (otherNote) {
-                                otherNote.disabled = true;
+                                otherNote.classList.add('hidden');
                                 otherNote.classList.remove('error');
                             }
                         });
                     }
                 });
+                
+                radioGroup.appendChild(radioContainer);
+                if (otherNote) {
+                    radioGroup.appendChild(otherNote);
+                }
                 
                 childRow.appendChild(radioGroup);
                 content.appendChild(childRow);
