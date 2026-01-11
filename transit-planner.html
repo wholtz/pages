@@ -248,6 +248,15 @@
         .hidden {
             display: none;
         }
+        
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #888;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -302,14 +311,18 @@
             
             <button id="update-button" class="update-button">Update calendar events</button>
         </div>
+        
+        <div class="footer">
+            Version v0.1.1
+        </div>
     </div>
     
     <div id="loading-overlay" class="overlay hidden">
         <div class="spinner"></div>
     </div>
 
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://apis.google.com/js/api.js" async defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer onload="gisLoaded()"></script>
+    <script src="https://apis.google.com/js/api.js" async defer onload="gapiLoaded()"></script>
     <script>
         // Configuration
         const CLIENT_ID = '858135856078-t7gp1otlvn68tfp97k4mnokq1hn6lrsf.apps.googleusercontent.com';
@@ -352,7 +365,6 @@
         
         function maybeEnableApp() {
             if (gapiInited && gisInited) {
-                document.getElementById('auth-button').style.visibility = 'visible';
                 checkStoredToken();
             }
         }
@@ -367,9 +379,15 @@
         }
         
         function handleAuthClick() {
+            if (!tokenClient) {
+                showBanner('error', 'Authentication not ready. Please refresh the page.');
+                return;
+            }
+            
             tokenClient.callback = async (resp) => {
                 if (resp.error !== undefined) {
-                    throw (resp);
+                    showBanner('error', 'Authentication failed: ' + resp.error);
+                    return;
                 }
                 accessToken = resp.access_token;
                 setCookie('google_access_token', accessToken, 1);
@@ -883,7 +901,7 @@
         document.getElementById('auth-button').addEventListener('click', handleAuthClick);
         document.getElementById('update-button').addEventListener('click', updateCalendarEvents);
         
-        // Load Google API
+        // Make functions available globally for script onload callbacks
         window.gapiLoaded = gapiLoaded;
         window.gisLoaded = gisLoaded;
     </script>
