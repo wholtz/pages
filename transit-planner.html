@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Van Holtz transport planner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .auth-section {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .auth-button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .auth-button:hover {
+            background-color: #357ae8;
+        }
+        
+        .week-selector {
+            margin-bottom: 20px;
+        }
+        
+        .week-selector label {
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        
+        .week-selector select {
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .schedule-table th,
+        .schedule-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .schedule-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .schedule-table td:first-child {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            width: 100px;
+        }
+        
+        .cell-content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .child-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .child-name {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 4px;
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .radio-option input[type="radio"] {
+            cursor: pointer;
+        }
+        
+        .radio-option label {
+            cursor: pointer;
+        }
+        
+        .other-note {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 200px;
+        }
+        
+        .other-note:disabled {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
+        
+        .other-note.error {
+            background-color: #ffcccc;
+            border-color: #ff0000;
+        }
+        
+        .button-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .all-button {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            background-color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
+        .all-button:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .update-button {
+            background-color: #34a853;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .update-button:hover {
+            background-color: #2d8e47;
+        }
+        
+        .update-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .banner {
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .banner.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .banner.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .banner-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: inherit;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Van Holtz transport planner</h1>
+        
+        <div id="banner-container"></div>
+        
+        <div id="auth-section" class="auth-section">
+            <button id="auth-button" class="auth-button">
+                <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><path d="M17.6 9.2l-.1-1.8H9v3.4h4.8C13.6 12 13 13 12 13.6v2.2h3a8.8 8.8 0 0 0 2.6-6.6z" fill="#4285F4"/><path d="M9 18c2.4 0 4.5-.8 6-2.2l-3-2.2a5.4 5.4 0 0 1-8-2.9H1V13a9 9 0 0 0 8 5z" fill="#34A853"/><path d="M4 10.7a5.4 5.4 0 0 1 0-3.4V5H1a9 9 0 0 0 0 8l3-2.3z" fill="#FBBC05"/><path d="M9 3.6c1.3 0 2.5.4 3.4 1.3L15 2.3A9 9 0 0 0 1 5l3 2.4a5.4 5.4 0 0 1 5-3.7z" fill="#EA4335"/></g></svg>
+                Sign in with Google
+            </button>
+        </div>
+        
+        <div id="app-section" class="hidden">
+            <div class="week-selector">
+                <label for="week-select">Week:</label>
+                <select id="week-select"></select>
+            </div>
+            
+            <table class="schedule-table" id="schedule-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Monday</th>
+                        <th>Tuesday</th>
+                        <th>Wednesday</th>
+                        <th>Thursday</th>
+                        <th>Friday</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Drop off</td>
+                        <td id="mon-dropoff"></td>
+                        <td id="tue-dropoff"></td>
+                        <td id="wed-dropoff"></td>
+                        <td id="thu-dropoff"></td>
+                        <td id="fri-dropoff"></td>
+                    </tr>
+                    <tr>
+                        <td>Pick up</td>
+                        <td id="mon-pickup"></td>
+                        <td id="tue-pickup"></td>
+                        <td id="wed-pickup"></td>
+                        <td id="thu-pickup"></td>
+                        <td id="fri-pickup"></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <button id="update-button" class="update-button">Update calendar events</button>
+        </div>
+    </div>
+    
+    <div id="loading-overlay" class="overlay hidden">
+        <div class="spinner"></div>
+    </div>
+
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js" async defer></script>
+    <script>
+        // Configuration
+        const CLIENT_ID = '858135856078-t7gp1otlvn68tfp97k4mnokq1hn6lrsf.apps.googleusercontent.com';
+        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
+        const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
+        
+        const CHILDREN = ['Amelia', 'Jojo', 'Vivian'];
+        const PARENTS = ['Kier', 'Will', 'Other'];
+        const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        const TYPES = ['dropoff', 'pickup'];
+        
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
+        let accessToken = null;
+        let familyCalendarId = null;
+        
+        // Initialize Google API
+        function gapiLoaded() {
+            gapi.load('client', initializeGapiClient);
+        }
+        
+        async function initializeGapiClient() {
+            await gapi.client.init({
+                discoveryDocs: [DISCOVERY_DOC],
+            });
+            gapiInited = true;
+            maybeEnableApp();
+        }
+        
+        function gisLoaded() {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: '',
+            });
+            gisInited = true;
+            maybeEnableApp();
+        }
+        
+        function maybeEnableApp() {
+            if (gapiInited && gisInited) {
+                document.getElementById('auth-button').style.visibility = 'visible';
+                checkStoredToken();
+            }
+        }
+        
+        function checkStoredToken() {
+            const storedToken = getCookie('google_access_token');
+            if (storedToken) {
+                accessToken = storedToken;
+                gapi.client.setToken({access_token: accessToken});
+                onAuthSuccess();
+            }
+        }
+        
+        function handleAuthClick() {
+            tokenClient.callback = async (resp) => {
+                if (resp.error !== undefined) {
+                    throw (resp);
+                }
+                accessToken = resp.access_token;
+                setCookie('google_access_token', accessToken, 1);
+                onAuthSuccess();
+            };
+            
+            if (gapi.client.getToken() === null) {
+                tokenClient.requestAccessToken({prompt: 'consent'});
+            } else {
+                tokenClient.requestAccessToken({prompt: ''});
+            }
+        }
+        
+        async function onAuthSuccess() {
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('app-section').classList.remove('hidden');
+            
+            try {
+                await findFamilyCalendar();
+                initializeWeekSelector();
+                await loadWeekData();
+            } catch (error) {
+                showBanner('error', 'Error initializing: ' + error.message);
+            }
+        }
+        
+        async function findFamilyCalendar() {
+            const response = await gapi.client.calendar.calendarList.list();
+            const calendars = response.result.items;
+            const familyCal = calendars.find(cal => cal.summary === 'Family');
+            
+            if (!familyCal) {
+                throw new Error('Family calendar not found');
+            }
+            
+            familyCalendarId = familyCal.id;
+        }
+        
+        function initializeWeekSelector() {
+            const select = document.getElementById('week-select');
+            const today = new Date();
+            
+            for (let i = 0; i < 5; i++) {
+                const weekStart = getWeekStart(today, i);
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekEnd.getDate() + 6);
+                
+                const option = document.createElement('option');
+                option.value = weekStart.toISOString();
+                option.textContent = formatWeekRange(weekStart, weekEnd);
+                select.appendChild(option);
+            }
+            
+            select.addEventListener('change', loadWeekData);
+        }
+        
+        function getWeekStart(date, weeksAhead) {
+            const d = new Date(date);
+            d.setDate(d.getDate() + (weeksAhead * 7));
+            const day = d.getDay();
+            const diff = d.getDate() - day;
+            return new Date(d.setDate(diff));
+        }
+        
+        function formatWeekRange(start, end) {
+            const options = { month: 'short', day: 'numeric' };
+            return `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString('en-US', options)}, ${end.getFullYear()}`;
+        }
+        
+        async function loadWeekData() {
+            const weekStart = new Date(document.getElementById('week-select').value);
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 7);
+            
+            try {
+                const response = await gapi.client.calendar.events.list({
+                    calendarId: familyCalendarId,
+                    timeMin: weekStart.toISOString(),
+                    timeMax: weekEnd.toISOString(),
+                    privateExtendedProperty: 'generatedBy=school-transport-app',
+                    singleEvents: true,
+                });
+                
+                const events = response.result.items || [];
+                
+                if (events.length > 0) {
+                    populateTableFromEvents(events);
+                } else {
+                    populateTableRandom();
+                }
+            } catch (error) {
+                showBanner('error', 'Error loading events: ' + error.message);
+                populateTableRandom();
+            }
+        }
+        
+        function populateTableFromEvents(events) {
+            const eventMap = {};
+            
+            events.forEach(event => {
+                const props = event.extendedProperties?.private;
+                if (props && props.dayOfWeek && props.eventType) {
+                    const key = `${props.dayOfWeek}-${props.eventType}`;
+                    eventMap[key] = event;
+                }
+            });
+            
+            DAYS.forEach((day, dayIdx) => {
+                TYPES.forEach(type => {
+                    const key = `${day.toLowerCase()}-${type}`;
+                    const event = eventMap[key];
+                    const cellData = event ? parseEventToCell(event) : getRandomDefault();
+                    renderCell(dayIdx, type, cellData);
+                });
+            });
+        }
+        
+        function parseEventToCell(event) {
+            const title = event.summary || '';
+            const description = event.description || '';
+            const cellData = {};
+            
+            if (title === 'No drop offs needed' || title === 'No pick ups needed') {
+                CHILDREN.forEach(child => {
+                    cellData[child] = { parent: 'Other', note: '' };
+                });
+            } else {
+                const kierMatch = title.match(/Kier (?:drops off|picks up) (.+?)(?:\.|$)/);
+                const willMatch = title.match(/Will (?:drops off|picks up) (.+?)(?:\.|$)/);
+                
+                const kierKids = kierMatch && kierMatch[1] === 'all kids' ? CHILDREN : 
+                               kierMatch ? kierMatch[1].split(', ').map(s => s.trim()) : [];
+                const willKids = willMatch && willMatch[1] === 'all kids' ? CHILDREN : 
+                               willMatch ? willMatch[1].split(', ').map(s => s.trim()) : [];
+                
+                CHILDREN.forEach(child => {
+                    if (kierKids.includes(child)) {
+                        cellData[child] = { parent: 'Kier', note: '' };
+                    } else if (willKids.includes(child)) {
+                        cellData[child] = { parent: 'Will', note: '' };
+                    } else {
+                        const noteMatch = description.match(new RegExp(`${child}: (.+?)(?:\\n|$)`));
+                        cellData[child] = { 
+                            parent: 'Other', 
+                            note: noteMatch ? noteMatch[1] : '' 
+                        };
+                    }
+                });
+            }
+            
+            return cellData;
+        }
+        
+        function getRandomDefault() {
+            const parent = Math.random() < 0.5 ? 'Kier' : 'Will';
+            const cellData = {};
+            CHILDREN.forEach(child => {
+                cellData[child] = { parent, note: '' };
+            });
+            return cellData;
+        }
+        
+        function populateTableRandom() {
+            DAYS.forEach((day, dayIdx) => {
+                TYPES.forEach(type => {
+                    renderCell(dayIdx, type, getRandomDefault());
+                });
+            });
+        }
+        
+        function renderCell(dayIdx, type, cellData) {
+            const cellId = `${DAYS[dayIdx].toLowerCase().substring(0, 3)}-${type}`;
+            const cell = document.getElementById(cellId);
+            
+            const content = document.createElement('div');
+            content.className = 'cell-content';
+            
+            CHILDREN.forEach(child => {
+                const childRow = document.createElement('div');
+                childRow.className = 'child-row';
+                
+                const childName = document.createElement('div');
+                childName.className = 'child-name';
+                childName.textContent = child;
+                childRow.appendChild(childName);
+                
+                const radioGroup = document.createElement('div');
+                radioGroup.className = 'radio-group';
+                
+                PARENTS.forEach(parent => {
+                    const radioOption = document.createElement('div');
+                    radioOption.className = 'radio-option';
+                    
+                    const radio = document.createElement('input');
+                    radio.type = 'radio';
+                    radio.name = `${cellId}-${child}`;
+                    radio.value = parent;
+                    radio.id = `${cellId}-${child}-${parent}`;
+                    radio.checked = cellData[child].parent === parent;
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = radio.id;
+                    label.textContent = parent;
+                    
+                    radioOption.appendChild(radio);
+                    radioOption.appendChild(label);
+                    radioGroup.appendChild(radioOption);
+                    
+                    if (parent === 'Other') {
+                        const noteInput = document.createElement('input');
+                        noteInput.type = 'text';
+                        noteInput.className = 'other-note';
+                        noteInput.value = cellData[child].note;
+                        noteInput.disabled = !radio.checked;
+                        noteInput.dataset.cellId = cellId;
+                        noteInput.dataset.child = child;
+                        
+                        radio.addEventListener('change', () => {
+                            noteInput.disabled = false;
+                            noteInput.focus();
+                        });
+                        
+                        radioGroup.appendChild(noteInput);
+                    } else {
+                        radio.addEventListener('change', () => {
+                            const otherNote = radioGroup.querySelector('.other-note');
+                            if (otherNote) {
+                                otherNote.disabled = true;
+                                otherNote.classList.remove('error');
+                            }
+                        });
+                    }
+                });
+                
+                childRow.appendChild(radioGroup);
+                content.appendChild(childRow);
+            });
+            
+            const buttonRow = document.createElement('div');
+            buttonRow.className = 'button-row';
+            
+            const kierButton = document.createElement('button');
+            kierButton.className = 'all-button';
+            kierButton.textContent = 'All Kier';
+            kierButton.addEventListener('click', () => setAllChildren(cellId, 'Kier'));
+            
+            const willButton = document.createElement('button');
+            willButton.className = 'all-button';
+            willButton.textContent = 'All Will';
+            willButton.addEventListener('click', () => setAllChildren(cellId, 'Will'));
+            
+            buttonRow.appendChild(kierButton);
+            buttonRow.appendChild(willButton);
+            content.appendChild(buttonRow);
+            
+            cell.innerHTML = '';
+            cell.appendChild(content);
+        }
+        
+        function setAllChildren(cellId, parent) {
+            CHILDREN.forEach(child => {
+                const radio = document.getElementById(`${cellId}-${child}-${parent}`);
+                if (radio) {
+                    radio.checked = true;
+                    radio.dispatchEvent(new Event('change'));
+                }
+            });
+        }
+        
+        function getCellState() {
+            const state = {};
+            
+            DAYS.forEach((day, dayIdx) => {
+                TYPES.forEach(type => {
+                    const cellId = `${day.toLowerCase().substring(0, 3)}-${type}`;
+                    state[cellId] = {};
+                    
+                    CHILDREN.forEach(child => {
+                        const radios = document.getElementsByName(`${cellId}-${child}`);
+                        let parent = 'Kier';
+                        let note = '';
+                        
+                        radios.forEach(radio => {
+                            if (radio.checked) {
+                                parent = radio.value;
+                            }
+                        });
+                        
+                        if (parent === 'Other') {
+                            const noteInput = document.querySelector(`.other-note[data-cell-id="${cellId}"][data-child="${child}"]`);
+                            note = noteInput ? noteInput.value : '';
+                        }
+                        
+                        state[cellId][child] = { parent, note };
+                    });
+                });
+            });
+            
+            return state;
+        }
+        
+        function validateState(state) {
+            let valid = true;
+            
+            Object.keys(state).forEach(cellId => {
+                CHILDREN.forEach(child => {
+                    const data = state[cellId][child];
+                    if (data.parent === 'Other' && !data.note.trim()) {
+                        const noteInput = document.querySelector(`.other-note[data-cell-id="${cellId}"][data-child="${child}"]`);
+                        if (noteInput) {
+                            noteInput.classList.add('error');
+                            valid = false;
+                        }
+                    } else {
+                        const noteInput = document.querySelector(`.other-note[data-cell-id="${cellId}"][data-child="${child}"]`);
+                        if (noteInput) {
+                            noteInput.classList.remove('error');
+                        }
+                    }
+                });
+            });
+            
+            return valid;
+        }
+        
+        function generateEventTitle(cellData, type) {
+            const kierKids = [];
+            const willKids = [];
+            const otherKids = [];
+            
+            CHILDREN.forEach(child => {
+                if (cellData[child].parent === 'Kier') kierKids.push(child);
+                else if (cellData[child].parent === 'Will') willKids.push(child);
+                else otherKids.push(child);
+            });
+            
+            if (otherKids.length === 3) {
+                return type === 'dropoff' ? 'No drop offs needed' : 'No pick ups needed';
+            }
+            
+            const action = type === 'dropoff' ? 'drops off' : 'picks up';
+            const parts = [];
+            
+            if (kierKids.length > 0) {
+                const kids = kierKids.length === 3 ? 'all kids' : kierKids.join(', ');
+                parts.push(`Kier ${action} ${kids}`);
+            }
+            
+            if (willKids.length > 0) {
+                const kids = willKids.length === 3 ? 'all kids' : willKids.join(', ');
+                parts.push(`Will ${action} ${kids}`);
+            }
+            
+            return parts.join('. ') + (parts.length > 0 ? '.' : '');
+        }
+        
+        function generateEventDescription(cellData) {
+            const notes = [];
+            
+            CHILDREN.forEach(child => {
+                if (cellData[child].parent === 'Other' && cellData[child].note) {
+                    notes.push(`${child}: ${cellData[child].note}`);
+                }
+            });
+            
+            return notes.join('\n');
+        }
+        
+        async function updateCalendarEvents() {
+            const state = getCellState();
+            
+            if (!validateState(state)) {
+                return;
+            }
+            
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            document.getElementById('update-button').disabled = true;
+            
+            try {
+                const weekStart = new Date(document.getElementById('week-select').value);
+                
+                const response = await gapi.client.calendar.events.list({
+                    calendarId: familyCalendarId,
+                    timeMin: weekStart.toISOString(),
+                    timeMax: new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                    privateExtendedProperty: 'generatedBy=school-transport-app',
+                    singleEvents: true,
+                });
+                
+                const existingEvents = response.result.items || [];
+                const eventMap = {};
+                existingEvents.forEach(event => {
+                    const props = event.extendedProperties?.private;
+                    if (props && props.dayOfWeek && props.eventType) {
+                        eventMap[`${props.dayOfWeek}-${props.eventType}`] = event;
+                    }
+                });
+                
+                for (let dayIdx = 0; dayIdx < DAYS.length; dayIdx++) {
+                    for (const type of TYPES) {
+                        const day = DAYS[dayIdx];
+                        const cellId = `${day.toLowerCase().substring(0, 3)}-${type}`;
+                        const cellData = state[cellId];
+                        
+                        const eventDate = new Date(weekStart);
+                        eventDate.setDate(eventDate.getDate() + dayIdx + 1);
+                        
+                        let startHour, endHour;
+                        if (type === 'dropoff') {
+                            startHour = 7;
+                            endHour = 8;
+                        } else {
+                            startHour = 17;
+                            endHour = 18;
+                        }
+                        
+                        const startTime = new Date(eventDate);
+                        startTime.setHours(startHour, type === 'dropoff' ? 30 : 0, 0);
+                        
+                        const endTime = new Date(eventDate);
+                        endTime.setHours(endHour, type === 'dropoff' ? 30 : 0, 0);
+                        
+                        const event = {
+                            summary: generateEventTitle(cellData, type),
+                            description: generateEventDescription(cellData),
+                            start: {
+                                dateTime: startTime.toISOString(),
+                                timeZone: 'America/Los_Angeles',
+                            },
+                            end: {
+                                dateTime: endTime.toISOString(),
+                                timeZone: 'America/Los_Angeles',
+                            },
+                            extendedProperties: {
+                                private: {
+                                    generatedBy: 'school-transport-app',
+                                    eventType: type,
+                                    dayOfWeek: day.toLowerCase(),
+                                },
+                            },
+                        };
+                        
+                        const existingEvent = eventMap[`${day.toLowerCase()}-${type}`];
+                        
+                        if (existingEvent) {
+                            await gapi.client.calendar.events.update({
+                                calendarId: familyCalendarId,
+                                eventId: existingEvent.id,
+                                resource: event,
+                            });
+                        } else {
+                            await gapi.client.calendar.events.insert({
+                                calendarId: familyCalendarId,
+                                resource: event,
+                            });
+                        }
+                    }
+                }
+                
+                showBanner('success', 'Calendar events updated successfully');
+            } catch (error) {
+                showBanner('error', 'Error updating calendar: ' + error.message);
+            } finally {
+                document.getElementById('loading-overlay').classList.add('hidden');
+                document.getElementById('update-button').disabled = false;
+            }
+        }
+        
+        function showBanner(type, message) {
+            const container = document.getElementById('banner-container');
+            container.innerHTML = '';
+            
+            const banner = document.createElement('div');
+            banner.className = `banner ${type}`;
+            
+            const text = document.createElement('span');
+            text.textContent = message;
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'banner-close';
+            closeBtn.innerHTML = '&times;';
+            closeBtn.addEventListener('click', () => banner.remove());
+            
+            banner.appendChild(text);
+            banner.appendChild(closeBtn);
+            
+            container.appendChild(banner);
+            
+            setTimeout(() => {
+                if (banner.parentNode) {
+                    banner.remove();
+                }
+            }, 5000);
+        }
+        
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+        
+        function setCookie(name, value, hours) {
+            const date = new Date();
+            date.setTime(date.getTime() + (hours * 60 * 60 * 1000));
+            const expires = `expires=${date.toUTCString()}`;
+            document.cookie = `${name}=${value};${expires};path=/`;
+        }
+        
+        // Event listeners
+        document.getElementById('auth-button').addEventListener('click', handleAuthClick);
+        document.getElementById('update-button').addEventListener('click', updateCalendarEvents);
+        
+        // Load Google API
+        window.gapiLoaded = gapiLoaded;
+        window.gisLoaded = gisLoaded;
+    </script>
+</body>
+</html>
