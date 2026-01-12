@@ -314,7 +314,7 @@
         </div>
         
         <div class="footer">
-            Version v0.2.0
+            Version v0.3.0
         </div>
     </div>
     
@@ -409,7 +409,18 @@
             try {
                 await findFamilyCalendar();
                 initializeWeekSelector();
-                await loadWeekData();
+                
+                // Check if there's saved state to restore
+                const savedState = loadTableStateFromStorage();
+                if (savedState) {
+                    // Restore the saved state
+                    restoreTableState(savedState);
+                    deleteTableStateFromStorage();
+                    showBanner('success', 'Re-authenticated successfully. Your unsaved changes have been restored.');
+                } else {
+                    // Load from calendar as normal
+                    await loadWeekData();
+                }
             } catch (error) {
                 showBanner('error', 'Error initializing: ' + error.message);
             }
@@ -861,7 +872,23 @@
                 
                 showBanner('success', 'Calendar events updated successfully');
             } catch (error) {
-                showBanner('error', 'Error updating calendar: ' + error.message);
+                // Check if it's an authentication error (401)
+                if (error.status === 401 || (error.result && error.result.error && error.result.error.code === 401)) {
+                    // Clear the expired token
+                    deleteCookie('google_access_token');
+                    gapi.client.setToken(null);
+                    
+                    // Save the current table state before showing re-auth message
+                    saveTableStateToStorage(getCellState());
+                    
+                    showBanner('error', 'Your session has expired. Please sign in again. Your unsaved changes have been preserved.');
+                    
+                    // Show auth section, hide app section
+                    document.getElementById('app-section').classList.add('hidden');
+                    document.getElementById('auth-section').classList.remove('hidden');
+                } else {
+                    showBanner('error', 'Error updating calendar: ' + (error.message || 'Unknown error'));
+                }
             } finally {
                 document.getElementById('loading-overlay').classList.add('hidden');
                 document.getElementById('update-button').disabled = false;
@@ -907,6 +934,75 @@
             date.setTime(date.getTime() + (hours * 60 * 60 * 1000));
             const expires = `expires=${date.toUTCString()}`;
             document.cookie = `${name}=${value};${expires};path=/`;
+        }
+        
+        function deleteCookie(name) {
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/`;
+        }
+        
+        function saveTableStateToStorage(state) {
+            try {
+                const weekSelect = document.getElementById('week-select');
+                const savedData = {
+                    state: state,
+                    week: weekSelect ? weekSelect.value : null
+                };
+                localStorage.setItem('transportPlannerState', JSON.stringify(savedData));
+            } catch (error) {
+                console.error('Error saving state:', error);
+            }
+        }
+        
+        function loadTableStateFromStorage() {
+            try {
+                const saved = localStorage.getItem('transportPlannerState');
+                return saved ? JSON.parse(saved) : null;
+            } catch (error) {
+                console.error('Error loading state:', error);
+                return null;
+            }
+        }
+        
+        function deleteTableStateFromStorage() {
+            try {
+                localStorage.removeItem('transportPlannerState');
+            } catch (error) {
+                console.error('Error deleting state:', error);
+            }
+        }
+        
+        function restoreTableState(savedData) {
+            const { state, week } = savedData;
+            
+            // Set the week selector if saved
+            if (week) {
+                const weekSelect = document.getElementById('week-select');
+                if (weekSelect) {
+                    weekSelect.value = week;
+                }
+            }
+            
+            // Restore each cell's state
+            Object.keys(state).forEach(cellId => {
+                const cellData = state[cellId];
+                const [dayAbbr, type] = cellId.split('-');
+                
+                CHILDREN.forEach(child => {
+                    const data = cellData[child];
+                    const radio = document.getElementById(`${cellId}-${child}-${data.parent}`);
+                    if (radio) {
+                        radio.checked = true;
+                        radio.dispatchEvent(new Event('change'));
+                        
+                        if (data.parent === 'Other' && data.note) {
+                            const noteInput = document.querySelector(`.other-note[data-cell-id="${cellId}"][data-child="${child}"]`);
+                            if (noteInput) {
+                                noteInput.value = data.note;
+                            }
+                        }
+                    }
+                });
+            });
         }
         
         // Event listeners
