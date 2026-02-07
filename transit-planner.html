@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Van Holtz transport planner</title>
+    <title>Van Holtz Transport Planner</title>
     <style>
         * {
             margin: 0;
@@ -262,7 +262,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Van Holtz transport planner</h1>
+        <h1>Van Holtz Transport Planner</h1>
         
         <div id="banner-container"></div>
         
@@ -314,7 +314,7 @@
         </div>
         
         <div class="footer">
-            Version v0.3.0
+            Version v0.4.0
         </div>
     </div>
     
@@ -326,7 +326,7 @@
     <script src="https://apis.google.com/js/api.js" async defer onload="gapiLoaded()"></script>
     <script>
         // Configuration
-        const CLIENT_ID = '858135856078-t7gp1otlvn68tfp97k4mnokq1hn6lrsf.apps.googleusercontent.com';
+        const CLIENT_ID = 'YOUR_CLIENT_ID_HERE';
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
         const SCOPES = 'https://www.googleapis.com/auth/calendar';
         
@@ -488,11 +488,11 @@
                 if (events.length > 0) {
                     populateTableFromEvents(events);
                 } else {
-                    populateTableRandom();
+                    populateTableEmpty();
                 }
             } catch (error) {
                 showBanner('error', 'Error loading events: ' + error.message);
-                populateTableRandom();
+                populateTableEmpty();
             }
         }
         
