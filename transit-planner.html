@@ -314,7 +314,7 @@
         </div>
         
         <div class="footer">
-            Version v0.4.1
+            Version v0.4.2
         </div>
     </div>
     
@@ -553,6 +553,22 @@
             return cellData;
         }
         
+        function getEmptyDefault() {
+            const cellData = {};
+            CHILDREN.forEach(child => {
+                cellData[child] = { parent: null, note: '' };
+            });
+            return cellData;
+        }
+        
+        function populateTableEmpty() {
+            DAYS.forEach((day, dayIdx) => {
+                TYPES.forEach(type => {
+                    renderCell(dayIdx, type, getEmptyDefault());
+                });
+            });
+        }
+        
         function getRandomDefault() {
             const parent = Math.random() < 0.5 ? 'Kier' : 'Will';
             const cellData = {};
@@ -604,7 +620,10 @@
                     radio.name = `${cellId}-${child}`;
                     radio.value = parent;
                     radio.id = `${cellId}-${child}-${parent}`;
-                    radio.checked = cellData[child].parent === parent;
+                    // Only check radio if parent is not null (i.e., loaded from calendar)
+                    if (cellData[child].parent !== null) {
+                        radio.checked = cellData[child].parent === parent;
+                    }
                     
                     const label = document.createElement('label');
                     label.htmlFor = radio.id;
