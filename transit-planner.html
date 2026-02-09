@@ -314,7 +314,7 @@
         </div>
         
         <div class="footer">
-            Version v0.4.5
+            Version v0.4.6
         </div>
     </div>
     
@@ -623,9 +623,11 @@
                     radio.name = `${cellId}-${child}`;
                     radio.value = parent;
                     radio.id = `${cellId}-${child}-${parent}`;
-                    // Only check radio if parent is not null (i.e., loaded from calendar)
-                    if (cellData[child].parent !== null) {
-                        radio.checked = cellData[child].parent === parent;
+                    
+                    // CRITICAL: Only set checked if there's an actual parent value (not null)
+                    const childData = cellData[child];
+                    if (childData && childData.parent !== null && childData.parent === parent) {
+                        radio.checked = true;
                     }
                     
                     const label = document.createElement('label');
