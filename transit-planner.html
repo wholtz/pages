@@ -314,7 +314,7 @@
         </div>
         
         <div class="footer">
-            Version v0.4.8
+            Version v0.4.9
         </div>
     </div>
     
@@ -410,15 +410,15 @@
                 await findFamilyCalendar();
                 initializeWeekSelector();
                 
-                // Check if there's saved state to restore (from session expiration)
+                // Check if there's saved state to restore (from session expiration ONLY)
                 const savedState = loadTableStateFromStorage();
                 if (savedState) {
-                    // Restore the saved state
+                    // Restore the saved state from interrupted session
                     restoreTableState(savedState);
                     deleteTableStateFromStorage();
                     showBanner('success', 'Re-authenticated successfully. Your unsaved changes have been restored.');
                 } else {
-                    // Load from calendar as normal
+                    // Normal load: fetch from calendar
                     await loadWeekData();
                 }
             } catch (error) {
@@ -1014,22 +1014,27 @@
                 }
             }
             
-            // Restore each cell's state
+            // First, populate the table empty
+            populateTableEmpty();
+            
+            // Then restore each cell's state
             Object.keys(state).forEach(cellId => {
                 const cellData = state[cellId];
-                const [dayAbbr, type] = cellId.split('-');
                 
                 CHILDREN.forEach(child => {
                     const data = cellData[child];
-                    const radio = document.getElementById(`${cellId}-${child}-${data.parent}`);
-                    if (radio) {
-                        radio.checked = true;
-                        radio.dispatchEvent(new Event('change'));
-                        
-                        if (data.parent === 'Other' && data.note) {
-                            const noteInput = document.querySelector(`.other-note[data-cell-id="${cellId}"][data-child="${child}"]`);
-                            if (noteInput) {
-                                noteInput.value = data.note;
+                    // Only restore if there's actually a parent selected
+                    if (data && data.parent !== null && data.parent !== undefined) {
+                        const radio = document.getElementById(`${cellId}-${child}-${data.parent}`);
+                        if (radio) {
+                            radio.checked = true;
+                            radio.dispatchEvent(new Event('change'));
+                            
+                            if (data.parent === 'Other' && data.note) {
+                                const noteInput = document.querySelector(`.other-note[data-cell-id="${cellId}"][data-child="${child}"]`);
+                                if (noteInput) {
+                                    noteInput.value = data.note;
+                                }
                             }
                         }
                     }
