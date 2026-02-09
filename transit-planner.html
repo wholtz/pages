@@ -314,7 +314,7 @@
         </div>
         
         <div class="footer">
-            Version v0.4.2
+            Version v0.4.3
         </div>
     </div>
     
@@ -709,7 +709,7 @@
                     
                     CHILDREN.forEach(child => {
                         const radios = document.getElementsByName(`${cellId}-${child}`);
-                        let parent = 'Kier';
+                        let parent = null;
                         let note = '';
                         
                         radios.forEach(radio => {
@@ -833,6 +833,14 @@
                         const day = DAYS[dayIdx];
                         const cellId = `${day.toLowerCase().substring(0, 3)}-${type}`;
                         const cellData = state[cellId];
+                        
+                        // Check if any child has a parent selected
+                        const hasAnySelection = CHILDREN.some(child => cellData[child].parent !== null);
+                        
+                        if (!hasAnySelection) {
+                            // Skip creating/updating event if no selections made
+                            continue;
+                        }
                         
                         const eventDate = new Date(weekStart);
                         eventDate.setDate(eventDate.getDate() + dayIdx + 1);
