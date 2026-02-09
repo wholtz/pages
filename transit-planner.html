@@ -508,7 +508,7 @@
                 TYPES.forEach(type => {
                     const key = `${day.toLowerCase()}-${type}`;
                     const event = eventMap[key];
-                    const cellData = event ? parseEventToCell(event) : getRandomDefault();
+                    const cellData = event ? parseEventToCell(event) : getEmptyDefault();
                     renderCell(dayIdx, type, cellData);
                 });
             });
@@ -568,23 +568,6 @@
             DAYS.forEach((day, dayIdx) => {
                 TYPES.forEach(type => {
                     renderCell(dayIdx, type, getEmptyDefault());
-                });
-            });
-        }
-        
-        function getRandomDefault() {
-            const parent = Math.random() < 0.5 ? 'Kier' : 'Will';
-            const cellData = {};
-            CHILDREN.forEach(child => {
-                cellData[child] = { parent, note: '' };
-            });
-            return cellData;
-        }
-        
-        function populateTableRandom() {
-            DAYS.forEach((day, dayIdx) => {
-                TYPES.forEach(type => {
-                    renderCell(dayIdx, type, getRandomDefault());
                 });
             });
         }
