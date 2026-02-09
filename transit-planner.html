@@ -314,7 +314,7 @@
         </div>
         
         <div class="footer">
-            Version v0.4.7
+            Version v0.4.8
         </div>
     </div>
     
@@ -410,7 +410,7 @@
                 await findFamilyCalendar();
                 initializeWeekSelector();
                 
-                // Check if there's saved state to restore
+                // Check if there's saved state to restore (from session expiration)
                 const savedState = loadTableStateFromStorage();
                 if (savedState) {
                     // Restore the saved state
