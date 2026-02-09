@@ -314,7 +314,7 @@
         </div>
         
         <div class="footer">
-            Version v0.4.4
+            Version v0.4.5
         </div>
     </div>
     
@@ -485,11 +485,8 @@
                 
                 const events = response.result.items || [];
                 
-                if (events.length > 0) {
-                    populateTableFromEvents(events);
-                } else {
-                    populateTableEmpty();
-                }
+                // Always call populateTableFromEvents, which handles both cases
+                populateTableFromEvents(events);
             } catch (error) {
                 showBanner('error', 'Error loading events: ' + error.message);
                 populateTableEmpty();
