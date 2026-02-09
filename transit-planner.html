@@ -314,7 +314,7 @@
         </div>
         
         <div class="footer">
-            Version v0.4.3
+            Version v0.4.4
         </div>
     </div>
     
@@ -541,11 +541,17 @@
                     } else if (willKids.includes(child)) {
                         cellData[child] = { parent: 'Will', note: '' };
                     } else {
+                        // Check if there's a note in description for this child
                         const noteMatch = description.match(new RegExp(`${child}: (.+?)(?:\\n|$)`));
-                        cellData[child] = { 
-                            parent: 'Other', 
-                            note: noteMatch ? noteMatch[1] : '' 
-                        };
+                        if (noteMatch) {
+                            cellData[child] = { 
+                                parent: 'Other', 
+                                note: noteMatch[1]
+                            };
+                        } else {
+                            // Child not mentioned - leave unselected
+                            cellData[child] = { parent: null, note: '' };
+                        }
                     }
                 });
             }
